@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>MineTexas Writing Style Explorer</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+</head>
+
+<body>
+
+<div id="container">
+
+    <!-- ====================================== -->
+    <!-- HEADER -->
+    <!-- ====================================== -->
+
+    <header>
+
+        <h1>MineTexas Writing Style Explorer</h1>
+
+        <div id="controls">
+
+            <label>
+                Dataset
+                <select id="datasetSelect">
+
+                    <option value="minecraft">
+                        Minecraft
+                    </option>
+
+                    <option value="discord">
+                        Discord
+                    </option>
+
+                </select>
+            </label>
+
+            <label>
+                Projection
+                <select id="projectionSelect">
+
+                    <option value="umap">
+                        UMAP
+                    </option>
+
+                    <option value="pca">
+                        PCA
+                    </option>
+
+                </select>
+            </label>
+
+            <label>
+                Colour By
+                <select id="colourSelect">
+                </select>
+            </label>
+
+            <label>
+                Search Player
+                <input
+                    id="playerSearch"
+                    list="playerList"
+                    autocomplete="off"
+                    placeholder="Type player..."
+                >
+                <datalist id="playerList"></datalist>
+            </label>
+
+            <button id="showLabels">
+                Show Labels
+            </button>
+
+            <button id="hideLabels">
+                Hide Labels
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ====================================== -->
+    <!-- MAIN -->
+    <!-- ====================================== -->
+
+    <main>
+
+        <!-- ============================= -->
+        <!-- Plot -->
+        <!-- ============================= -->
+
+        <section id="mapSection">
+
+            <div id="plot"></div>
+
+        </section>
+
+
+        <!-- ============================= -->
+        <!-- Sidebar -->
+        <!-- ============================= -->
+
+        <aside id="sidebar">
+
+            <h2 id="playerName">
+                Select a Player
+            </h2>
+
+            <div class="card">
+
+                <h3>Summary</h3>
+
+                <div id="summary">
+
+                    Click a player on the map.
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Most Unique Traits</h3>
+
+                <ul id="uniqueTraits"></ul>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Most Average Traits</h3>
+
+                <ul id="averageTraits"></ul>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Nearest Neighbours</h3>
+
+                <ul id="neighbourList"></ul>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Statistics</h3>
+
+                <div id="playerStats">
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </main>
+
+</div>
+
+
+<!-- ====================================== -->
+<!-- Javascript -->
+<!-- ====================================== -->
+
+<script src="map.js"></script>
+
+</body>
+
+</html>
