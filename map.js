@@ -225,11 +225,14 @@ function drawPlot() {
 
             const stats = playerStats[d.player];
 
-            if (!stats) return null;
+            if (!stats) return 0;
 
-            const v = stats[currentColour];
+            const v = Number(stats[currentColour]);
 
-            return v === undefined ? null : Number(v);
+            if (!Number.isFinite(v))
+                return 0;
+
+            return v;
 
         });
         console.log("Colour:", currentColour);
@@ -239,14 +242,13 @@ function drawPlot() {
         // Symmetric log transform
         //--------------------------------------------------
 
-        const transformed = values.map(v => {
-
-            if (v === null || isNaN(v))
-                return null;
-
-            return Math.sign(v) * Math.log1p(Math.abs(v));
-
-        });
+        const transformed = values.map(v =>
+            Math.sign(v) * Math.log1p(Math.abs(v))
+        );
+        console.log(transformed.slice(0,20));
+        console.log(
+            transformed.some(v => !Number.isFinite(v))
+        );
 
         marker.color = transformed;
         marker.colorscale = "Viridis";
@@ -287,6 +289,8 @@ function drawPlot() {
 
     if (!figureCreated) {
 
+        Plotly.purge("plot");
+
         Plotly.newPlot(
             "plot",
             [trace],
@@ -302,10 +306,17 @@ function drawPlot() {
 
     } else {
 
-        Plotly.react(
+        Plotly.purge("plot");
+
+        Plotly.newPlot(
             "plot",
             [trace],
-            layout
+            layout,
+            {
+                responsive: true,
+                displaylogo: false,
+                scrollZoom: true
+            }
         );
     console.log(currentColour);
     console.log(values.slice(0,20));
