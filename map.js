@@ -406,13 +406,13 @@ function setupSearch(){
 
 function highlightPlayer(player){
 
+    console.log("Highlighting:", player);
+
     const plot = currentData();
 
-
     const sizes = plot.data.map(d =>
-        d.player === player ? 18 : 5
+        d.player === player ? 20 : 5
     );
-
 
     const opacity = plot.data.map(d =>
         d.player === player ? 1 : 0.15
@@ -422,34 +422,38 @@ function highlightPlayer(player){
     Plotly.restyle(
         "plot",
         {
-            "marker.size":[sizes],
-            "marker.opacity":[opacity]
-        }
+            "marker.size": [sizes],
+            "marker.opacity": [opacity]
+        },
+        [0]
     );
 
 
-    // zoom to player
-
-    const selected =
-        plot.data.find(
-            d => d.player === player
-        );
+    const selected = plot.data.find(
+        d => d.player === player
+    );
 
 
     if(selected){
 
+        const x = Number(selected[plot.x]);
+        const y = Number(selected[plot.y]);
+
+
         Plotly.relayout(
             "plot",
             {
+
                 "xaxis.range":[
-                    Number(selected[plot.x])-1,
-                    Number(selected[plot.x])+1
+                    x-1,
+                    x+1
                 ],
 
                 "yaxis.range":[
-                    Number(selected[plot.y])-1,
-                    Number(selected[plot.y])+1
+                    y-1,
+                    y+1
                 ]
+
             }
         );
 
