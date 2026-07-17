@@ -197,7 +197,7 @@ function drawPlot(){
         `${currentDataset.toUpperCase()} • ${currentProjection}`;
 
     if(!figureCreated){
-
+        Plotly.purge("plot");
         Plotly.newPlot(
 
             "plot",
@@ -259,19 +259,31 @@ async function setDataset(dataset){
     await loadDataset(dataset);
 
 }
-
 // ======================================================
 // Start
 // ======================================================
 
-window.addEventListener(
+window.addEventListener("load", () => {
 
-    "load",
+    // Load the default dataset
+    loadDataset(currentDataset);
 
-    ()=>{
+    // Dataset selector
+    document
+        .getElementById("datasetSelect")
+        .addEventListener("change", function () {
 
-        loadDataset(currentDataset);
+            setDataset(this.value);
 
-    }
+        });
 
-);
+    // Projection selector
+    document
+        .getElementById("projectionSelect")
+        .addEventListener("change", function () {
+
+            setProjection(this.value);
+
+        });
+
+});
