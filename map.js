@@ -30,27 +30,20 @@ let styleFeatures = [];
 // ======================================================
 
 const layout = {
-
     title: "Writing Style Map",
-
     dragmode: "pan",
-
     hovermode: "closest",
-
     xaxis: {
         zeroline: false,
         title: ""
     },
-
     yaxis: {
         zeroline: false,
         title: ""
     },
-
     margin: {
         t: 60
     }
-
 };
 
 // ======================================================
@@ -58,17 +51,14 @@ const layout = {
 // ======================================================
 
 async function loadCSV(path){
-
     const response = await fetch(path);
-
     const text = await response.text();
 
-    return Papa.parse(text,{
-        header:true,
-        dynamicTyping:true,
-        skipEmptyLines:true
+    return Papa.parse(text, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true
     }).data;
-
 }
 
 // ======================================================
@@ -76,11 +66,8 @@ async function loadCSV(path){
 // ======================================================
 
 async function loadJSON(path){
-
     const response = await fetch(path);
-
     return await response.json();
-
 }
 
 // ======================================================
@@ -88,9 +75,7 @@ async function loadJSON(path){
 // ======================================================
 
 async function loadDataset(dataset){
-
     currentDataset = dataset;
-
     const folder = DATASETS[currentDataset];
 
     console.log("Loading:", currentDataset);
@@ -100,70 +85,53 @@ async function loadDataset(dataset){
         pcaData,
         playerStats,
         serverStats
-
     ] = await Promise.all([
-
         loadCSV(`${folder}/player_umap_2d_results_named.csv`),
-
         loadCSV(`${folder}/player_pca_results_named.csv`),
-
         loadJSON(`${folder}/player_stylometry_raw.json`),
-
         loadCSV(`${folder}/server_stylometry_raw.csv`)
-
     ]);
 
     // Get every stylometric feature from the server CSV
-    styleFeatures = Object.keys(serverStats[0])
-    .filter(f => f !== "player")
-    .sort();
-
-        populateColourDropdown();
-
-        setupSearch();
-
-        console.log("Finished.");
-
-        drawPlot();
-
+    if (serverStats && serverStats.length > 0) {
+        styleFeatures = Object.keys(serverStats[0])
+            .filter(f => f !== "player")
+            .sort();
+    } else {
+        styleFeatures = [];
     }
 
-function populateColourDropdown(){
+    populateColourDropdown();
+    setupSearch();
+    console.log("Finished loading data.");
+    drawPlot();
+}
 
+function populateColourDropdown(){
     const select = document.getElementById("colourSelect");
+    if (!select) return;
 
     select.innerHTML = "";
 
     //--------------------------------------------------
     // Cluster first
     //--------------------------------------------------
-
     let option = document.createElement("option");
-
     option.value = "cluster";
     option.textContent = "HDBSCAN Cluster";
-
     select.appendChild(option);
 
     //--------------------------------------------------
     // Stylometric features
     //--------------------------------------------------
-
     for(const feature of styleFeatures){
-
         option = document.createElement("option");
-
         option.value = feature;
-
-        option.textContent =
-            feature
-                .replace("_statistics_"," • ")
-                .replaceAll("_"," ");
-
+        option.textContent = feature
+            .replace("_statistics_", " • ")
+            .replaceAll("_", " ");
         select.appendChild(option);
-
     }
-
 }
 
 // ======================================================
@@ -171,51 +139,31 @@ function populateColourDropdown(){
 // ======================================================
 
 function currentData(){
-
-    if(currentProjection==="UMAP"){
-
+    if(currentProjection === "UMAP"){
         return {
-
-            data:umapData,
-
-            x:"UMAP_1",
-
-            y:"UMAP_2"
-
+            data: umapData,
+            x: "UMAP_1",
+            y: "UMAP_2"
         };
-
     }
-
     return {
-
-        data:pcaData,
-
-        x:"PC1",
-
-        y:"PC2"
-
+        data: pcaData,
+        x: "PC1",
+        y: "PC2"
     };
-
 }
 
 // ======================================================
 // Draw / Update figure
 // ======================================================
 
-function drawPlot() {
-
-    const plot = currentData();
-
-    //--------------------------------------------------
-    // Build marker colours
-    //--------------------------------------------------
-
+function getMarkerConfig(plot) {
     let marker = {
         size: 7,
         opacity: 0.8
     };
-    if (currentColour === "cluster") {
 
+    if (currentColour === "cluster") {
         const palette = [
             "#e6194b","#3cb44b","#ffe119","#4363d8",
             "#f58231","#911eb4","#46f0f0","#f032e6",
@@ -228,90 +176,66 @@ function drawPlot() {
         let next = 0;
 
         plot.data.forEach(d => {
-
             const c = String(d.cluster);
-
             if (!(c in clusterColours)) {
-
                 if (c === "-1") {
                     clusterColours[c] = "#888888";
                 } else {
                     clusterColours[c] = palette[next % palette.length];
                     next++;
                 }
-
             }
-
         });
 
-        marker.color = plot.data.map(d => clusterColours[String(d.cluster)]);
+        marker.color = plot.data.map(d => clusterColours[String(d.cluster)] || "#888888");
         marker.showscale = false;
-
-    }
+    } 
     else {
-
         const values = plot.data.map(d => {
-
             const stats = playerStats[d.player];
-
             if (!stats) return null;
-
             const v = stats[currentColour];
-
             return v === undefined ? null : Number(v);
-
         });
 
         const transformed = values.map(v => {
-
             if (v == null || isNaN(v)) return null;
-
             return Math.sign(v) * Math.log1p(Math.abs(v));
-
         });
 
         marker.color = transformed;
         marker.colorscale = "Viridis";
         marker.showscale = true;
-
         marker.colorbar = {
-
             title: currentColour
                 .replace("_statistics_", "<br>")
-                .replaceAll("_"," ")
-
+                .replaceAll("_", " ")
         };
+
+        console.log("Current metric:", currentColour);
+        console.log("First 20 raw values:", values.slice(0, 20));
     }
 
-    //--------------------------------------------------
-    // Plot
-    //--------------------------------------------------
+    return marker;
+}
+
+function drawPlot() {
+    const plot = currentData();
+    const marker = getMarkerConfig(plot);
 
     const trace = {
-
         type: "scatter",
-
         mode: "markers",
-
         x: plot.data.map(d => d[plot.x]),
         y: plot.data.map(d => d[plot.y]),
-
         text: plot.data.map(d => d.player),
-
-        hovertemplate:
-            "<b>%{text}</b><extra></extra>",
-
+        hovertemplate: "<b>%{text}</b><extra></extra>",
         marker: marker
-
     };
 
-    layout.title =
-        `${currentDataset.toUpperCase()} • ${currentProjection}`;
+    layout.title = `${currentDataset.toUpperCase()} • ${currentProjection}`;
 
     if (!figureCreated) {
-
-        Plotly.purge("plot");
-
         Plotly.newPlot(
             "plot",
             [trace],
@@ -322,38 +246,21 @@ function drawPlot() {
                 scrollZoom: true
             }
         );
-
         figureCreated = true;
-
     } else {
-
-        Plotly.purge("plot");
-
-        Plotly.newPlot(
-            "plot",
-            [trace],
-            layout,
-            {
-                responsive: true,
-                displaylogo: false,
-                scrollZoom: true
-            }
-        );
-    console.log(currentColour);
-    console.log(values.slice(0,20));
-
+        // Efficient graph data updating without a hard DOM redraw
+        Plotly.react("plot", [trace], layout);
     }
 }
+
 // ======================================================
 // Change projection
 // ======================================================
 
 function setProjection(projection){
-
-    currentProjection=projection;
-
+    currentProjection = projection;
+    setupSearch(); // Sync autocomplete choices to the active projection
     drawPlot();
-
 }
 
 // ======================================================
@@ -361,56 +268,42 @@ function setProjection(projection){
 // ======================================================
 
 async function setDataset(dataset){
-
     await loadDataset(dataset);
-
 }
+
 // ======================================================
 // Player search
 // ======================================================
 
 function setupSearch(){
-
     const input = document.getElementById("playerSearch");
     const list = document.getElementById("playerList");
+    if (!input || !list) return;
 
-    // Populate autocomplete
     list.innerHTML = "";
 
     currentData().data
         .map(d => d.player)
-        .sort((a,b) => a.localeCompare(b))
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b))
         .forEach(player => {
-
             const option = document.createElement("option");
-
             option.value = player;
-
             list.appendChild(option);
-
         });
 
-    // Replace previous listener
+    // Clean event registration
     input.onchange = function(){
-
         const player = this.value.trim();
-
         if(currentData().data.some(d => d.player === player)){
-
             highlightPlayer(player);
-
         }
-
-};
-
+    };
 }
 
 function highlightPlayer(player){
-
     const plot = currentData();
-
     const index = plot.data.findIndex(d => d.player === player);
-
     if(index === -1) return;
 
     const sizes = plot.data.map(() => 7);
@@ -418,6 +311,9 @@ function highlightPlayer(player){
 
     sizes[index] = 18;
     opacity[index] = 1;
+
+    // Pull standard base marker settings safely to prevent scope crashes
+    const baseMarker = getMarkerConfig(plot);
 
     Plotly.react(
         "plot",
@@ -429,7 +325,7 @@ function highlightPlayer(player){
             text: plot.data.map(d => d.player),
             hovertemplate: "<b>%{text}</b><extra></extra>",
             marker: {
-                ...buildMarker(),
+                ...baseMarker,
                 size: sizes,
                 opacity: opacity
             }
@@ -452,18 +348,13 @@ function highlightPlayer(player){
 }
 
 function resetHighlight(){
-
     const plot = currentData();
 
     Plotly.restyle(
         "plot",
         {
-            "marker.size":[
-                plot.data.map(()=>7)
-            ],
-            "marker.opacity":[
-                plot.data.map(()=>0.8)
-            ]
+            "marker.size": [plot.data.map(() => 7)],
+            "marker.opacity": [plot.data.map(() => 0.8)]
         },
         [0]
     );
@@ -471,73 +362,74 @@ function resetHighlight(){
     Plotly.relayout(
         "plot",
         {
-            "xaxis.autorange":true,
-            "yaxis.autorange":true
+            "xaxis.autorange": true,
+            "yaxis.autorange": true
         }
     );
 
-    document.getElementById("playerSearch").value = "";
+    const searchInput = document.getElementById("playerSearch");
+    if (searchInput) searchInput.value = "";
 
-    document.getElementById("playerStats").innerHTML = `
-        <h3>No player selected</h3>
-        <p>Click a player on the map or search for one.</p>
-    `;
+    const statsContainer = document.getElementById("playerStats");
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <h3>No player selected</h3>
+            <p>Click a player on the map or search for one.</p>
+        `;
+    }
 }
 
 function showPlayerInfo(player){
-
     const stats = playerStats[player];
-
+    const statsContainer = document.getElementById("playerStats");
+    if(!statsContainer) return;
     if(!stats) return;
 
     let html = `<h3>${player}</h3>`;
-
     html += "<table>";
 
-    Object.entries(stats).forEach(([k,v])=>{
+    Object.entries(stats).forEach(([k, v]) => {
+        // Safe check to avoid calling toFixed on text or metadata
+        const displayValue = (typeof v === 'number' || !isNaN(Number(v))) 
+            ? Number(v).toFixed(3) 
+            : v;
 
         html += `
         <tr>
-            <td>${k.replaceAll("_"," ")}</td>
-            <td>${Number(v).toFixed(3)}</td>
+            <td>${k.replaceAll("_", " ")}</td>
+            <td>${displayValue}</td>
         </tr>
         `;
-
     });
 
     html += "</table>";
-
-    document.getElementById("playerStats").innerHTML = html;
-
+    statsContainer.innerHTML = html;
 }
+
 // ======================================================
 // Start
 // ======================================================
 
 window.addEventListener("load", () => {
-
-    // Load the default dataset
     loadDataset(currentDataset);
 
-    // Dataset selector
-    document
-        .getElementById("datasetSelect")
-        .addEventListener("change", function () {
-
+    const datasetSelect = document.getElementById("datasetSelect");
+    if (datasetSelect) {
+        datasetSelect.addEventListener("change", function () {
             setDataset(this.value);
-
         });
+    }
 
-    document
-        .getElementById("colourSelect")
-        .addEventListener("change",function(){
-
-            currentColour=this.value;
-
+    const colourSelect = document.getElementById("colourSelect");
+    if (colourSelect) {
+        colourSelect.addEventListener("change", function () {
+            currentColour = this.value;
             drawPlot();
         });
+    }
 
-    document
-        .getElementById("resetHighlight")
-        .onclick = resetHighlight;
+    const resetBtn = document.getElementById("resetHighlight");
+    if (resetBtn) {
+        resetBtn.onclick = resetHighlight;
+    }
 });
