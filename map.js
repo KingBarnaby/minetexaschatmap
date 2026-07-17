@@ -216,15 +216,15 @@ function drawPlot() {
     if (currentColour === "cluster") {
 
         const palette = [
-            "#e6194b", "#3cb44b", "#ffe119", "#4363d8",
-            "#f58231", "#911eb4", "#46f0f0", "#f032e6",
-            "#bcf60c", "#fabebe", "#008080", "#e6beff",
-            "#9a6324", "#fffac8", "#800000", "#aaffc3",
-            "#808000", "#ffd8b1", "#000075", "#808080"
+            "#e6194b","#3cb44b","#ffe119","#4363d8",
+            "#f58231","#911eb4","#46f0f0","#f032e6",
+            "#bcf60c","#fabebe","#008080","#e6beff",
+            "#9a6324","#fffac8","#800000","#aaffc3",
+            "#808000","#ffd8b1","#000075","#808080"
         ];
 
         const clusterColours = {};
-        let nextColour = 0;
+        let next = 0;
 
         plot.data.forEach(d => {
 
@@ -233,31 +233,55 @@ function drawPlot() {
             if (!(c in clusterColours)) {
 
                 if (c === "-1") {
-
-                    clusterColours[c] = "#888888";   // Noise
-
+                    clusterColours[c] = "#888888";
                 } else {
-
-                    clusterColours[c] =
-                        palette[nextColour % palette.length];
-
-                    nextColour++;
-
+                    clusterColours[c] = palette[next % palette.length];
+                    next++;
                 }
 
             }
 
         });
 
-    marker.color = plot.data.map(
-        d => clusterColours[String(d.cluster)]
-    );
-
+    marker.color = plot.data.map(d => clusterColours[String(d.cluster)]);
     marker.showscale = false;
 
 }
-        console.log("Colour:", currentColour);
-        console.log(values.slice(0,20));
+else {
+
+    const values = plot.data.map(d => {
+
+        const stats = playerStats[d.player];
+
+        if (!stats) return null;
+
+        const v = stats[currentColour];
+
+        return v === undefined ? null : Number(v);
+
+    });
+
+    const transformed = values.map(v => {
+
+        if (v == null || isNaN(v)) return null;
+
+        return Math.sign(v) * Math.log1p(Math.abs(v));
+
+    });
+
+    marker.color = transformed;
+    marker.colorscale = "Viridis";
+    marker.showscale = true;
+
+    marker.colorbar = {
+
+        title: currentColour
+            .replace("_statistics_", "<br>")
+            .replaceAll("_"," ")
+
+    };
+
+}
 
         //--------------------------------------------------
         // Symmetric log transform
