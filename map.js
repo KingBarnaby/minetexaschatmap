@@ -373,13 +373,14 @@ function setupSearch(){
     const input = document.getElementById("playerSearch");
     const list = document.getElementById("playerList");
 
-    // fill autocomplete list
+    const plot = currentData();
 
+    // Populate autocomplete
     list.innerHTML = "";
 
-    umapData
+    plot.data
         .map(d => d.player)
-        .sort()
+        .sort((a,b) => a.localeCompare(b))
         .forEach(player => {
 
             const option = document.createElement("option");
@@ -390,25 +391,20 @@ function setupSearch(){
 
         });
 
+    // Replace previous listener
+    input.onchange = function(){
 
-    // when a player is selected
+        const player = this.value.trim();
 
-    input.addEventListener(
-        "change",
-        function(){
+        if(
+            plot.data.some(d => d.player === player)
+        ){
 
-            const player = this.value;
-
-            if(
-                umapData.some(d => d.player === player)
-            ){
-
-                highlightPlayer(player);
-
-            }
+            highlightPlayer(player);
 
         }
-    );
+
+    };
 
 }
 
@@ -464,8 +460,69 @@ function highlightPlayer(player){
 
             }
         );
+        showPlayerInfo(player);
 
     }
+
+}
+
+function resetHighlight(){
+
+    const plot = currentData();
+
+    Plotly.restyle(
+        "plot",
+        {
+            "marker.size":[
+                plot.data.map(()=>7)
+            ],
+            "marker.opacity":[
+                plot.data.map(()=>0.8)
+            ]
+        },
+        [0]
+    );
+
+    Plotly.relayout(
+        "plot",
+        {
+            "xaxis.autorange":true,
+            "yaxis.autorange":true
+        }
+    );
+
+    document.getElementById("playerSearch").value = "";
+
+    document.getElementById("playerInfo").innerHTML = `
+        <h3>No player selected</h3>
+        <p>Click a player on the map or search for one.</p>
+    `;
+}
+
+function showPlayerInfo(player){
+
+    const stats = playerStats[player];
+
+    if(!stats) return;
+
+    let html = `<h3>${player}</h3>`;
+
+    html += "<table>";
+
+    Object.entries(stats).forEach(([k,v])=>{
+
+        html += `
+        <tr>
+            <td>${k.replaceAll("_"," ")}</td>
+            <td>${Number(v).toFixed(3)}</td>
+        </tr>
+        `;
+
+    });
+
+    html += "</table>";
+
+    document.getElementById("playerInfo").innerHTML = html;
 
 }
 // ======================================================
@@ -493,7 +550,9 @@ window.addEventListener("load", () => {
             currentColour=this.value;
 
             drawPlot();
+        });
 
-});
-
+    document
+        .getElementById("resetHighlight")
+        .onclick = resetHighlight;
 });
