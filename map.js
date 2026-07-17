@@ -394,12 +394,15 @@ function getFeatureDistribution(key) {
 
 function percentageDifference(player, key) {
     const stats = playerStats[player];
-    if (!stats || typeof stats[key] !== "number") return 0;
+    if (!stats || typeof stats[key] !== "number") return null;
     
     const { mean } = getFeatureDistribution(key);
-    if (mean === 0) return 0;
     
-    return ((stats[key] - mean) / mean) * 100;
+    // Check against epsilon to catch zero or near-zero population baselines
+    const EPS = 1e-9;
+    if (Math.abs(mean) < EPS) return null;
+    
+    return ((stats[key] - mean) / Math.abs(mean)) * 100;
 }
 
 // Calculations sorted by statistical z-score instead of simple absolute value weights
@@ -467,7 +470,7 @@ function showPlayerInfo(player){
     const neighbors = getNearestNeighbours(player);
     const topUnique = getUniqueTraits(player);
 
-    // 6. Contextually descriptive multi-line workspace summary block
+    // Summary panel remains clean and contextual
     const summaryContainer = document.getElementById("summary");
     if (summaryContainer) {
         summaryContainer.innerHTML = `
@@ -486,11 +489,12 @@ function showPlayerInfo(player){
         `;
     }
 
-    // 3, 7. Transform values to percent deviations and clamp rows to top 15 most expressive variations
+    // Map features, calculate percentages, drop invalid items, and slice top 15
     let html = "<table>";
     const sortedFeatures = Object.keys(stats)
         .filter(k => typeof stats[k] === "number")
         .map(k => ({ key: k, diff: percentageDifference(player, k) }))
+        .filter(x => x.diff !== null) // Safely bypass features with zero baselines
         .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
         .slice(0, 15);
 
@@ -506,7 +510,7 @@ function showPlayerInfo(player){
     html += "</table>";
     statsContainer.innerHTML = html;
 
-    // Populating UI Trait structures with calculated contextual data
+    // Populate remaining trait structural panels
     const uniqueEl = document.getElementById("uniqueTraits");
     if (uniqueEl) {
         uniqueEl.innerHTML = topUnique
@@ -521,7 +525,6 @@ function showPlayerInfo(player){
             .join("");
     }
 
-    // 8. Neighbors populated as fully reactive actionable anchors
     const neighborEl = document.getElementById("neighbourList");
     if (neighborEl) {
         neighborEl.innerHTML = neighbors
