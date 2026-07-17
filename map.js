@@ -229,21 +229,21 @@ function drawPlot(){
 
     else{
 
-        const values = plot.data.map(d=>{
+        const values = plot.data.map((d, i) => {
 
-            const player = playerStats[String(d.player).trim()];
-            if (!player) {
-                console.warn("Missing player:", d.player);
+            const player = playerStats[d.player];
+
+            if (i === 0) {
+                console.log("Looking for:", d.player);
+                console.log("Found player object:", player);
+                console.log("Feature value:", player ? player[currentColour] : "NO PLAYER");
             }
 
-            if(player && player[currentColour]!==undefined){
-
-                return player[currentColour];
-
+            if(player && player[currentColour] !== undefined){
+                return Number(player[currentColour]);
             }
 
             return 0;
-
         });
 
         const transformed = values.map(v=>
@@ -343,7 +343,16 @@ function drawPlot(){
         );
 
     }
+    console.log(plot.data[0]);
 
+    console.log(Object.keys(playerStats)[0]);
+    
+    console.log(playerStats[Object.keys(playerStats)[0]]);
+
+    console.log("Current colour:", currentColour);
+    console.log("First plotted player:", plot.data[0].player);
+    console.log("First JSON player:", Object.keys(playerStats)[0]);
+    console.log("First JSON object:", playerStats[Object.keys(playerStats)[0]]);
 }
 // ======================================================
 // Change projection
@@ -404,8 +413,3 @@ window.addEventListener("load", () => {
 });
 
 });
-console.log(plot.data[0]);
-
-console.log(Object.keys(playerStats)[0]);
-
-console.log(playerStats[Object.keys(playerStats)[0]]);
