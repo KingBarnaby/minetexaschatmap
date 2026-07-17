@@ -1,0 +1,314 @@
+/* ==========================================================
+   Global
+========================================================== */
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+
+    margin:0;
+
+    font-family:
+        Inter,
+        Segoe UI,
+        Arial,
+        sans-serif;
+
+    background:#f5f7fb;
+
+    color:#222;
+}
+
+
+/* ==========================================================
+   Container
+========================================================== */
+
+#container{
+
+    display:flex;
+
+    flex-direction:column;
+
+    height:100vh;
+
+}
+
+
+/* ==========================================================
+   Header
+========================================================== */
+
+header{
+
+    background:white;
+
+    padding:20px 30px;
+
+    border-bottom:1px solid #d9d9d9;
+
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+
+    z-index:5;
+
+}
+
+header h1{
+
+    margin:0 0 18px 0;
+
+    font-size:34px;
+
+    font-weight:700;
+
+}
+
+
+/* ==========================================================
+   Controls
+========================================================== */
+
+#controls{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:15px;
+
+    align-items:flex-end;
+
+}
+
+#controls label{
+
+    display:flex;
+
+    flex-direction:column;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#666;
+
+}
+
+#controls select,
+#controls input{
+
+    margin-top:5px;
+
+    padding:8px 10px;
+
+    border:1px solid #cccccc;
+
+    border-radius:6px;
+
+    font-size:14px;
+
+    background:white;
+
+    min-width:170px;
+
+}
+
+#controls input{
+
+    min-width:220px;
+
+}
+
+#controls button{
+
+    padding:9px 18px;
+
+    border:none;
+
+    border-radius:6px;
+
+    background:#3f7df4;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:.2s;
+
+}
+
+#controls button:hover{
+
+    background:#275fca;
+
+}
+
+
+/* ==========================================================
+   Main
+========================================================== */
+
+main{
+
+    flex:1;
+
+    display:flex;
+
+    overflow:hidden;
+
+}
+
+
+/* ==========================================================
+   Plot
+========================================================== */
+
+#mapSection{
+
+    flex:1;
+
+    background:white;
+
+    padding:15px;
+
+}
+
+#plot{
+
+    width:100%;
+
+    height:100%;
+
+}
+
+
+/* ==========================================================
+   Sidebar
+========================================================== */
+
+#sidebar{
+
+    width:360px;
+
+    overflow-y:auto;
+
+    background:#f8f9fb;
+
+    border-left:1px solid #dcdcdc;
+
+    padding:20px;
+
+}
+
+
+#sidebar h2{
+
+    margin-top:0;
+
+    font-size:28px;
+
+}
+
+
+/* ==========================================================
+   Cards
+========================================================== */
+
+.card{
+
+    background:white;
+
+    border-radius:10px;
+
+    padding:16px;
+
+    margin-bottom:18px;
+
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+
+}
+
+.card h3{
+
+    margin-top:0;
+
+    margin-bottom:12px;
+
+    color:#444;
+
+}
+
+
+/* ==========================================================
+   Lists
+========================================================== */
+
+ul{
+
+    padding-left:18px;
+
+    margin:0;
+
+}
+
+li{
+
+    margin-bottom:8px;
+
+}
+
+
+/* ==========================================================
+   Scrollbar
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#cccccc;
+
+    border-radius:10px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#aaaaaa;
+
+}
+
+
+/* ==========================================================
+   Responsive
+========================================================== */
+
+@media(max-width:1100px){
+
+    main{
+
+        flex-direction:column;
+
+    }
+
+    #sidebar{
+
+        width:100%;
+
+        border-left:none;
+
+        border-top:1px solid #dddddd;
+
+        height:350px;
+
+    }
+
+}
