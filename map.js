@@ -247,9 +247,25 @@ function drawPlot() {
         // Symmetric log transform
         //--------------------------------------------------
 
-        const transformed = values.map(v =>
-            Math.sign(v) * Math.log1p(Math.abs(v))
-        );
+        const sorted = [...values].sort((a,b)=>a-b);
+
+        const min = sorted[Math.floor(sorted.length*0.05)];
+        const max = sorted[Math.floor(sorted.length*0.95)];
+
+
+        const transformed = values.map(v=>{
+
+            if(max===min)
+                return 0.5;
+        
+            let x = (v-min)/(max-min);
+
+            return Math.max(
+                0,
+                Math.min(1,x)
+            );
+
+        });
         console.log(transformed.slice(0,20));
         console.log(
             transformed.some(v => !Number.isFinite(v))
