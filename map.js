@@ -232,7 +232,6 @@ function drawPlot() {
             return v === undefined ? null : Number(v);
 
         });
-
         console.log("Colour:", currentColour);
         console.log(values.slice(0,20));
 
