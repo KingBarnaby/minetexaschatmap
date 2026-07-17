@@ -22,6 +22,9 @@ let serverStats = {};
 
 let figureCreated = false;
 
+let currentColour = "cluster";
+let styleFeatures = [];
+
 // ======================================================
 // Plot layout (created ONCE)
 // ======================================================
@@ -110,17 +113,54 @@ async function loadDataset(dataset){
 
     ]);
 
-    console.log("Finished.");
+    // Get every stylometric feature from the server CSV
+    styleFeatures = Object.keys(serverStats[0])
+    .filter(f => f !== "player")
+    .sort();
 
-    console.log("UMAP:",umapData.length);
-    console.log("PCA:",pcaData.length);
+        populateColourDropdown();
 
-    console.log(
-        "Players:",
-        Object.keys(playerStats).length
-    );
+        console.log("Finished.");
 
-    drawPlot();
+        drawPlot();
+
+    }
+
+function populateColourDropdown(){
+
+    const select = document.getElementById("colourSelect");
+
+    select.innerHTML = "";
+
+    //--------------------------------------------------
+    // Cluster first
+    //--------------------------------------------------
+
+    let option = document.createElement("option");
+
+    option.value = "cluster";
+    option.textContent = "HDBSCAN Cluster";
+
+    select.appendChild(option);
+
+    //--------------------------------------------------
+    // Stylometric features
+    //--------------------------------------------------
+
+    for(const feature of styleFeatures){
+
+        option = document.createElement("option");
+
+        option.value = feature;
+
+        option.textContent =
+            feature
+                .replace("_statistics_"," • ")
+                .replaceAll("_"," ");
+
+        select.appendChild(option);
+
+    }
 
 }
 
@@ -164,6 +204,79 @@ function drawPlot(){
 
     const plot = currentData();
 
+    //--------------------------------------------------
+    // Marker colouring
+    //--------------------------------------------------
+
+    let marker;
+
+    if(currentColour==="cluster"){
+
+        marker={
+
+            size:7,
+            opacity:0.8,
+
+            color:plot.data.map(d=>Number(d.cluster)),
+
+            colorscale:"Turbo",
+
+            showscale:false
+
+        };
+
+    }
+
+    else{
+
+        const values = plot.data.map(d=>{
+
+            const player = playerStats[d.player];
+
+            if(player && player[currentColour]!==undefined){
+
+                return player[currentColour];
+
+            }
+
+            return 0;
+
+        });
+
+        const transformed = values.map(v=>
+
+            Math.sign(v)*Math.log1p(Math.abs(v))
+
+        );
+
+        marker={
+
+            size:7,
+
+            opacity:0.8,
+
+            color:transformed,
+
+            colorscale:"Viridis",
+
+            showscale:true,
+
+            colorbar:{
+
+                title:currentColour
+                    .replace("_statistics_","<br>")
+                    .replaceAll("_"," ")
+
+            }
+
+        };
+
+    }
+
+    //--------------------------------------------------
+    // Trace
+    //--------------------------------------------------
+
     const trace={
 
         type:"scatter",
@@ -181,15 +294,7 @@ function drawPlot(){
         hovertemplate:
             "<b>%{text}</b><extra></extra>",
 
-        marker:{
-
-            size:7,
-
-            opacity:0.8,
-
-            color:"#4F8EF7"
-
-        }
+        marker:marker
 
     };
 
@@ -197,7 +302,7 @@ function drawPlot(){
         `${currentDataset.toUpperCase()} • ${currentProjection}`;
 
     if(!figureCreated){
-        Plotly.purge("plot");
+
         Plotly.newPlot(
 
             "plot",
@@ -237,7 +342,6 @@ function drawPlot(){
     }
 
 }
-
 // ======================================================
 // Change projection
 // ======================================================
@@ -285,5 +389,15 @@ window.addEventListener("load", () => {
             setProjection(this.value);
 
         });
+
+    document
+        .getElementById("colourSelect")
+        .addEventListener("change",function(){
+
+            currentColour=this.value;
+
+            drawPlot();
+
+});
 
 });
