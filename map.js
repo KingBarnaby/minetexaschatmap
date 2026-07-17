@@ -123,6 +123,7 @@ async function loadDataset(dataset){
         console.log("Finished.");
 
         drawPlot();
+        setupSearch();
 
     }
 
@@ -353,6 +354,106 @@ function setProjection(projection){
 async function setDataset(dataset){
 
     await loadDataset(dataset);
+
+}
+// ======================================================
+// Player search
+// ======================================================
+
+function setupSearch(){
+
+    const input = document.getElementById("playerSearch");
+    const list = document.getElementById("playerList");
+
+    // fill autocomplete list
+
+    list.innerHTML = "";
+
+    umapData
+        .map(d => d.player)
+        .sort()
+        .forEach(player => {
+
+            const option = document.createElement("option");
+
+            option.value = player;
+
+            list.appendChild(option);
+
+        });
+
+
+    // when a player is selected
+
+    input.addEventListener(
+        "change",
+        function(){
+
+            const player = this.value;
+
+            if(
+                umapData.some(d => d.player === player)
+            ){
+
+                highlightPlayer(player);
+
+            }
+
+        }
+    );
+
+}
+
+function highlightPlayer(player){
+
+    const plot = currentData();
+
+
+    const sizes = plot.data.map(d =>
+        d.player === player ? 18 : 5
+    );
+
+
+    const opacity = plot.data.map(d =>
+        d.player === player ? 1 : 0.15
+    );
+
+
+    Plotly.restyle(
+        "plot",
+        {
+            "marker.size":[sizes],
+            "marker.opacity":[opacity]
+        }
+    );
+
+
+    // zoom to player
+
+    const selected =
+        plot.data.find(
+            d => d.player === player
+        );
+
+
+    if(selected){
+
+        Plotly.relayout(
+            "plot",
+            {
+                "xaxis.range":[
+                    Number(selected[plot.x])-1,
+                    Number(selected[plot.x])+1
+                ],
+
+                "yaxis.range":[
+                    Number(selected[plot.y])-1,
+                    Number(selected[plot.y])+1
+                ]
+            }
+        );
+
+    }
 
 }
 // ======================================================
