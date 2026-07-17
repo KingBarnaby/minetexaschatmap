@@ -203,6 +203,14 @@ function currentData(){
 function drawPlot(){
 
     const plot = currentData();
+    const testPlayer = plot.data[0].player;
+
+    console.log("CSV player:", testPlayer);
+    console.log("Lookup:", playerStats[testPlayer]);
+
+    if (playerStats[testPlayer]) {
+        console.log("Features:", Object.keys(playerStats[testPlayer]).slice(0,10));
+    }
 
     //--------------------------------------------------
     // Marker colouring
