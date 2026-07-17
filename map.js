@@ -242,6 +242,7 @@ function drawPlot(){
             if(player && player[currentColour] !== undefined){
                 return Number(player[currentColour]);
             }
+            console.log(values.slice(0,20));
 
             return 0;
         });
