@@ -200,169 +200,117 @@ function currentData(){
 // Draw / Update figure
 // ======================================================
 
-function drawPlot(){
+function drawPlot() {
 
     const plot = currentData();
-    const testPlayer = plot.data[0].player;
-
-    console.log("CSV player:", testPlayer);
-    console.log("Lookup:", playerStats[testPlayer]);
-
-    if (playerStats[testPlayer]) {
-        console.log("Features:", Object.keys(playerStats[testPlayer]).slice(0,10));
-    }
 
     //--------------------------------------------------
-    // Marker colouring
+    // Build marker colours
     //--------------------------------------------------
 
-    let marker;
+    let marker = {
+        size: 7,
+        opacity: 0.8
+    };
 
-    if(currentColour==="cluster"){
+    if (currentColour === "cluster") {
 
-        marker={
+        marker.color = plot.data.map(d => Number(d.cluster));
+        marker.colorscale = "Turbo";
+        marker.showscale = false;
 
-            size:7,
-            opacity:0.8,
+    } else {
 
-            color:plot.data.map(d=>Number(d.cluster)),
+        const values = plot.data.map(d => {
 
-            colorscale:"Turbo",
+            const stats = playerStats[d.player];
 
-            showscale:false
+            if (!stats) return null;
 
-        };
+            const v = stats[currentColour];
 
-    }
+            return v === undefined ? null : Number(v);
 
-    else{
-
-        const values = plot.data.map((d, i) => {
-
-            const player = playerStats[d.player];
-            console.log(values.slice(0,20));
-
-            if (i === 0) {
-                console.log("Looking for:", d.player);
-                console.log("Found player object:", player);
-                console.log("Feature value:", player ? player[currentColour] : "NO PLAYER");
-            }
-
-            if(player && player[currentColour] !== undefined){
-                return Number(player[currentColour]);
-            }
-            console.log(values.slice(0,20));
-
-            return 0;
         });
 
-        const transformed = values.map(v=>
+        console.log("Colour:", currentColour);
+        console.log(values.slice(0,20));
 
-            Math.sign(v)*Math.log1p(Math.abs(v))
+        //--------------------------------------------------
+        // Symmetric log transform
+        //--------------------------------------------------
 
-        );
+        const transformed = values.map(v => {
 
-        marker={
+            if (v === null || isNaN(v))
+                return null;
 
-            size:7,
+            return Math.sign(v) * Math.log1p(Math.abs(v));
 
-            opacity:0.8,
+        });
 
-            color:transformed,
+        marker.color = transformed;
+        marker.colorscale = "Viridis";
+        marker.showscale = true;
 
-            colorscale:"Viridis",
-
-            showscale:true,
-
-            colorbar:{
-
-                title:currentColour
-                    .replace("_statistics_","<br>")
-                    .replaceAll("_"," ")
-
-            }
-
+        marker.colorbar = {
+            title: currentColour
+                .replace("_statistics_", "<br>")
+                .replaceAll("_", " ")
         };
 
     }
 
     //--------------------------------------------------
-    // Trace
+    // Plot
     //--------------------------------------------------
 
-    const trace={
+    const trace = {
 
-        type:"scatter",
+        type: "scatter",
 
-        mode:"markers",
+        mode: "markers",
 
-        x:plot.data.map(d=>d[plot.x]),
+        x: plot.data.map(d => d[plot.x]),
+        y: plot.data.map(d => d[plot.y]),
 
-        y:plot.data.map(d=>d[plot.y]),
-
-        text:plot.data.map(d=>d.player),
-
-        customdata:plot.data,
+        text: plot.data.map(d => d.player),
 
         hovertemplate:
             "<b>%{text}</b><extra></extra>",
 
-        marker:marker
+        marker: marker
 
     };
 
     layout.title =
         `${currentDataset.toUpperCase()} • ${currentProjection}`;
 
-    if(!figureCreated){
+    if (!figureCreated) {
 
         Plotly.newPlot(
-
             "plot",
-
             [trace],
-
             layout,
-
             {
-
-                responsive:true,
-
-                displaylogo:false,
-
-                scrollZoom:true
-
+                responsive: true,
+                displaylogo: false,
+                scrollZoom: true
             }
-
         );
 
-        figureCreated=true;
+        figureCreated = true;
 
-    }
-
-    else{
+    } else {
 
         Plotly.react(
-
             "plot",
-
             [trace],
-
             layout
-
         );
 
     }
-    console.log(plot.data[0]);
 
-    console.log(Object.keys(playerStats)[0]);
-    
-    console.log(playerStats[Object.keys(playerStats)[0]]);
-
-    console.log("Current colour:", currentColour);
-    console.log("First plotted player:", plot.data[0].player);
-    console.log("First JSON player:", Object.keys(playerStats)[0]);
-    console.log("First JSON object:", playerStats[Object.keys(playerStats)[0]]);
 }
 // ======================================================
 // Change projection
