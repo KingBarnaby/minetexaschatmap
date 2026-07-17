@@ -232,6 +232,7 @@ function drawPlot(){
         const values = plot.data.map((d, i) => {
 
             const player = playerStats[d.player];
+            console.log(values.slice(0,20));
 
             if (i === 0) {
                 console.log("Looking for:", d.player);
