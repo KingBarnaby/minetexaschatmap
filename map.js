@@ -92,7 +92,6 @@ async function loadDataset(dataset){
         loadCSV(`${folder}/server_stylometry_raw.csv`)
     ]);
 
-    // Get every stylometric feature from the server CSV
     if (serverStats && serverStats.length > 0) {
         styleFeatures = Object.keys(serverStats[0])
             .filter(f => f !== "player")
@@ -113,17 +112,11 @@ function populateColourDropdown(){
 
     select.innerHTML = "";
 
-    //--------------------------------------------------
-    // Cluster first
-    //--------------------------------------------------
     let option = document.createElement("option");
     option.value = "cluster";
     option.textContent = "HDBSCAN Cluster";
     select.appendChild(option);
 
-    //--------------------------------------------------
-    // Stylometric features
-    //--------------------------------------------------
     for(const feature of styleFeatures){
         option = document.createElement("option");
         option.value = feature;
@@ -211,9 +204,6 @@ function getMarkerConfig(plot) {
                 .replace("_statistics_", "<br>")
                 .replaceAll("_", " ")
         };
-
-        console.log("Current metric:", currentColour);
-        console.log("First 20 raw values:", values.slice(0, 20));
     }
 
     return marker;
@@ -235,6 +225,8 @@ function drawPlot() {
 
     layout.title = `${currentDataset.toUpperCase()} • ${currentProjection}`;
 
+    const plotEl = document.getElementById("plot");
+
     if (!figureCreated) {
         Plotly.newPlot(
             "plot",
@@ -246,9 +238,17 @@ function drawPlot() {
                 scrollZoom: true
             }
         );
+        
+        // 1. CLICK TO HIGHLIGHT TRIGGER REGISTERED ONCE
+        plotEl.on("plotly_click", function(eventData) {
+            if (eventData && eventData.points && eventData.points[0]) {
+                const player = eventData.points[0].text;
+                highlightPlayer(player);
+            }
+        });
+
         figureCreated = true;
     } else {
-        // Efficient graph data updating without a hard DOM redraw
         Plotly.react("plot", [trace], layout);
     }
 }
@@ -259,7 +259,7 @@ function drawPlot() {
 
 function setProjection(projection){
     currentProjection = projection;
-    setupSearch(); // Sync autocomplete choices to the active projection
+    setupSearch(); 
     drawPlot();
 }
 
@@ -292,7 +292,6 @@ function setupSearch(){
             list.appendChild(option);
         });
 
-    // Clean event registration
     input.onchange = function(){
         const player = this.value.trim();
         if(currentData().data.some(d => d.player === player)){
@@ -312,7 +311,6 @@ function highlightPlayer(player){
     sizes[index] = 18;
     opacity[index] = 1;
 
-    // Pull standard base marker settings safely to prevent scope crashes
     const baseMarker = getMarkerConfig(plot);
 
     Plotly.react(
@@ -370,6 +368,13 @@ function resetHighlight(){
     const searchInput = document.getElementById("playerSearch");
     if (searchInput) searchInput.value = "";
 
+    // Clear sidebar elements cleanly back to their base state
+    const els = ["playerName", "summary", "uniqueTraits", "averageTraits", "neighbourList", "playerStats"];
+    els.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+    });
+
     const statsContainer = document.getElementById("playerStats");
     if (statsContainer) {
         statsContainer.innerHTML = `
@@ -379,17 +384,72 @@ function resetHighlight(){
     }
 }
 
+// ======================================================
+// 3. Trait Computation Metrics (Deviation-based)
+// ======================================================
+
+function getUniqueTraits(player){
+    const stats = playerStats[player];
+    if (!stats) return [];
+    return Object.entries(stats)
+        .filter(([k, v]) => typeof v === "number")
+        .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+        .slice(0, 10);
+}
+
+function getAverageTraits(player){
+    const stats = playerStats[player];
+    if (!stats) return [];
+    return Object.entries(stats)
+        .filter(([k, v]) => typeof v === "number")
+        .sort((a, b) => Math.abs(a[1]) - Math.abs(b[1]))
+        .slice(0, 10);
+}
+
+// ======================================================
+// 4. Coordinate Proximity Math
+// ======================================================
+
+function getNearestNeighbours(player){
+    const plot = currentData();
+    const me = plot.data.find(d => d.player === player);
+    if (!me) return [];
+
+    return plot.data
+        .filter(d => d.player !== player)
+        .map(d => ({
+            player: d.player,
+            dist: Math.hypot(
+                d[plot.x] - me[plot.x],
+                d[plot.y] - me[plot.y]
+            )
+        }))
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 10);
+}
+
+// ======================================================
+// Render Metadata & Statistical Panels
+// ======================================================
+
 function showPlayerInfo(player){
     const stats = playerStats[player];
     const statsContainer = document.getElementById("playerStats");
     if(!statsContainer) return;
     if(!stats) return;
 
-    let html = `<h3>${player}</h3>`;
-    html += "<table>";
+    // 2. Clear out container and map variables to sidebar structural boxes
+    const nameContainer = document.getElementById("playerName");
+    if (nameContainer) nameContainer.textContent = player;
 
+    const summaryContainer = document.getElementById("summary");
+    if (summaryContainer) {
+        summaryContainer.innerHTML = `<b>${Object.keys(stats).length}</b> stylometric features`;
+    }
+
+    let html = "";
+    html += "<table>";
     Object.entries(stats).forEach(([k, v]) => {
-        // Safe check to avoid calling toFixed on text or metadata
         const displayValue = (typeof v === 'number' || !isNaN(Number(v))) 
             ? Number(v).toFixed(3) 
             : v;
@@ -401,9 +461,30 @@ function showPlayerInfo(player){
         </tr>
         `;
     });
-
     html += "</table>";
     statsContainer.innerHTML = html;
+
+    // Populate computed complex metrics into the lists
+    const uniqueEl = document.getElementById("uniqueTraits");
+    if (uniqueEl) {
+        uniqueEl.innerHTML = getUniqueTraits(player)
+            .map(x => `<li>${x[0].replaceAll("_", " ")} (${x[1].toFixed(2)})</li>`)
+            .join("");
+    }
+
+    const averageEl = document.getElementById("averageTraits");
+    if (averageEl) {
+        averageEl.innerHTML = getAverageTraits(player)
+            .map(x => `<li>${x[0].replaceAll("_", " ")} (${x[1].toFixed(2)})</li>`)
+            .join("");
+    }
+
+    const neighborEl = document.getElementById("neighbourList");
+    if (neighborEl) {
+        neighborEl.innerHTML = getNearestNeighbours(player)
+            .map(x => `<li>${x.player}</li>`)
+            .join("");
+    }
 }
 
 // ======================================================
