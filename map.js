@@ -120,10 +120,11 @@ async function loadDataset(dataset){
 
         populateColourDropdown();
 
+        setupSearch();
+
         console.log("Finished.");
 
         drawPlot();
-        setupSearch();
 
     }
 
@@ -373,12 +374,10 @@ function setupSearch(){
     const input = document.getElementById("playerSearch");
     const list = document.getElementById("playerList");
 
-    const plot = currentData();
-
     // Populate autocomplete
     list.innerHTML = "";
 
-    plot.data
+    currentData().data
         .map(d => d.player)
         .sort((a,b) => a.localeCompare(b))
         .forEach(player => {
@@ -407,63 +406,81 @@ function setupSearch(){
     };
 
 }
+function buildMarker(){
 
-function highlightPlayer(player){
+    if(currentColour === "cluster"){
 
-    console.log("Highlighting:", player);
-
-    const plot = currentData();
-
-    const sizes = plot.data.map(d =>
-        d.player === player ? 20 : 5
-    );
-
-    const opacity = plot.data.map(d =>
-        d.player === player ? 1 : 0.15
-    );
-
-
-    Plotly.restyle(
-        "plot",
-        {
-            "marker.size": [sizes],
-            "marker.opacity": [opacity]
-        },
-        [0]
-    );
-
-
-    const selected = plot.data.find(
-        d => d.player === player
-    );
-
-
-    if(selected){
-
-        const x = Number(selected[plot.x]);
-        const y = Number(selected[plot.y]);
-
-
-        Plotly.relayout(
-            "plot",
-            {
-
-                "xaxis.range":[
-                    x-1,
-                    x+1
-                ],
-
-                "yaxis.range":[
-                    y-1,
-                    y+1
-                ]
-
-            }
-        );
-        showPlayerInfo(player);
+        return {
+            color: currentData().data.map(d => clusterColours[d.cluster]),
+            size: 7
+        };
 
     }
 
+    const values = currentData().data.map(d => {
+
+        const stats = playerStats[d.player];
+
+        return stats ? Number(stats[currentColour]) : null;
+
+    });
+
+    return {
+
+        color: values,
+
+        colorscale: "Viridis",
+
+        showscale: true
+
+    };
+
+}
+
+function highlightPlayer(player){
+
+    const plot = currentData();
+
+    const index = plot.data.findIndex(d => d.player === player);
+
+    if(index === -1) return;
+
+    const sizes = plot.data.map(() => 7);
+    const opacity = plot.data.map(() => 0.15);
+
+    sizes[index] = 18;
+    opacity[index] = 1;
+
+    Plotly.react(
+        "plot",
+        [{
+            type: "scatter",
+            mode: "markers",
+            x: plot.data.map(d => d[plot.x]),
+            y: plot.data.map(d => d[plot.y]),
+            text: plot.data.map(d => d.player),
+            hovertemplate: "<b>%{text}</b><extra></extra>",
+            marker: {
+                ...buildMarker(),
+                size: sizes,
+                opacity: opacity
+            }
+        }],
+        layout
+    );
+
+    Plotly.relayout("plot", {
+        "xaxis.range": [
+            plot.data[index][plot.x] - 0.5,
+            plot.data[index][plot.x] + 0.5
+        ],
+        "yaxis.range": [
+            plot.data[index][plot.y] - 0.5,
+            plot.data[index][plot.y] + 0.5
+        ]
+    });
+
+    updateSidebar(player);
 }
 
 function resetHighlight(){
