@@ -231,7 +231,10 @@ function drawPlot(){
 
         const values = plot.data.map(d=>{
 
-            const player = playerStats[d.player];
+            const player = playerStats[String(d.player).trim()];
+            if (!player) {
+                console.warn("Missing player:", d.player);
+            }
 
             if(player && player[currentColour]!==undefined){
 
