@@ -281,36 +281,6 @@ function drawPlot() {
 
         };
 
-        //--------------------------------------------------
-        // Symmetric log transform
-        //--------------------------------------------------
-
-        const sorted = [...values].sort((a,b)=>a-b);
-
-        const min = sorted[Math.floor(sorted.length*0.05)];
-        const max = sorted[Math.floor(sorted.length*0.95)];
-
-
-        const transformed = values.map(v =>
-            Math.sign(v) * Math.log1p(Math.abs(v))
-        );
-        console.log(transformed.slice(0,20));
-        console.log(
-            transformed.some(v => !Number.isFinite(v))
-        );
-
-        marker.color = transformed;
-        marker.colorscale = "Viridis";
-        marker.showscale = true;
-
-        marker.colorbar = {
-            title: currentColour
-                .replace("_statistics_", "<br>")
-                .replaceAll("_", " ")
-        };
-
-    }
-
     //--------------------------------------------------
     // Plot
     //--------------------------------------------------
