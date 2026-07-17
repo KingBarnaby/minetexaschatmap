@@ -243,45 +243,43 @@ function drawPlot() {
 
         });
 
-    marker.color = plot.data.map(d => clusterColours[String(d.cluster)]);
-    marker.showscale = false;
+        marker.color = plot.data.map(d => clusterColours[String(d.cluster)]);
+        marker.showscale = false;
 
-}
-else {
+    }
+    else {
 
-    const values = plot.data.map(d => {
+        const values = plot.data.map(d => {
 
-        const stats = playerStats[d.player];
+            const stats = playerStats[d.player];
 
-        if (!stats) return null;
+            if (!stats) return null;
 
-        const v = stats[currentColour];
+            const v = stats[currentColour];
 
-        return v === undefined ? null : Number(v);
+            return v === undefined ? null : Number(v);
 
-    });
+        });
 
-    const transformed = values.map(v => {
+        const transformed = values.map(v => {
 
-        if (v == null || isNaN(v)) return null;
+            if (v == null || isNaN(v)) return null;
 
-        return Math.sign(v) * Math.log1p(Math.abs(v));
+            return Math.sign(v) * Math.log1p(Math.abs(v));
 
-    });
+        });
 
-    marker.color = transformed;
-    marker.colorscale = "Viridis";
-    marker.showscale = true;
+        marker.color = transformed;
+        marker.colorscale = "Viridis";
+        marker.showscale = true;
 
-    marker.colorbar = {
+        marker.colorbar = {
 
-        title: currentColour
-            .replace("_statistics_", "<br>")
-            .replaceAll("_"," ")
+            title: currentColour
+                .replace("_statistics_", "<br>")
+                .replaceAll("_"," ")
 
-    };
-
-}
+        };
 
         //--------------------------------------------------
         // Symmetric log transform
