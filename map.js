@@ -215,7 +215,12 @@ function drawPlot() {
 
     if (currentColour === "cluster") {
 
-        marker.color = plot.data.map(d => Number(d.cluster));
+        const clusters = [...new Set(plot.data.map(d => d.cluster))];
+
+        const clusterMap = {};
+        clusters.forEach((c, i) => clusterMap[c] = i);
+
+        marker.color = plot.data.map(d => clusterMap[d.cluster]);
         marker.colorscale = "Turbo";
         marker.showscale = false;
 
