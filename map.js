@@ -404,3 +404,8 @@ window.addEventListener("load", () => {
 });
 
 });
+console.log(plot.data[0]);
+
+console.log(Object.keys(playerStats)[0]);
+
+console.log(playerStats[Object.keys(playerStats)[0]]);
