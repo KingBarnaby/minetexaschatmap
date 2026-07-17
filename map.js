@@ -308,7 +308,8 @@ function drawPlot() {
             [trace],
             layout
         );
-
+    console.log(currentColour);
+    console.log(values.slice(0,20));
     }
 
 }
