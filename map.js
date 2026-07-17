@@ -395,45 +395,13 @@ function setupSearch(){
 
         const player = this.value.trim();
 
-        if(
-            plot.data.some(d => d.player === player)
-        ){
+        if(currentData().data.some(d => d.player === player)){
 
             highlightPlayer(player);
 
         }
 
-    };
-
-}
-function buildMarker(){
-
-    if(currentColour === "cluster"){
-
-        return {
-            color: currentData().data.map(d => clusterColours[d.cluster]),
-            size: 7
-        };
-
-    }
-
-    const values = currentData().data.map(d => {
-
-        const stats = playerStats[d.player];
-
-        return stats ? Number(stats[currentColour]) : null;
-
-    });
-
-    return {
-
-        color: values,
-
-        colorscale: "Viridis",
-
-        showscale: true
-
-    };
+};
 
 }
 
@@ -480,7 +448,7 @@ function highlightPlayer(player){
         ]
     });
 
-    updateSidebar(player);
+    showPlayerInfo(player);
 }
 
 function resetHighlight(){
@@ -510,7 +478,7 @@ function resetHighlight(){
 
     document.getElementById("playerSearch").value = "";
 
-    document.getElementById("playerInfo").innerHTML = `
+    document.getElementById("playerStats").innerHTML = `
         <h3>No player selected</h3>
         <p>Click a player on the map or search for one.</p>
     `;
@@ -539,7 +507,7 @@ function showPlayerInfo(player){
 
     html += "</table>";
 
-    document.getElementById("playerInfo").innerHTML = html;
+    document.getElementById("playerStats").innerHTML = html;
 
 }
 // ======================================================
