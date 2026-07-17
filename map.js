@@ -352,15 +352,6 @@ window.addEventListener("load", () => {
 
         });
 
-    // Projection selector
-    document
-        .getElementById("projectionSelect")
-        .addEventListener("change", function () {
-
-            setProjection(this.value);
-
-        });
-
     document
         .getElementById("colourSelect")
         .addEventListener("change",function(){
